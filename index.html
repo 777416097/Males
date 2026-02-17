@@ -3,55 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة وجبات 2026 - الإصدار السحابي</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>إدارة وجبات 2026 - الإصدار الاحترافي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root { --primary: #4f46e5; --bg: #f3f4f6; --card: #ffffff; --danger: #ef4444; --success: #22c55e; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1e293b; }
         .app-container { max-width: 800px; margin: auto; background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
-        /* كرت الميزانية المتجددة */
+        /* كرت الميزانية */
         .budget-card { background: #1e293b; color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
         .progress-bar { background: rgba(255,255,255,0.2); height: 10px; border-radius: 5px; margin: 10px 0; overflow: hidden; }
-        #progressFill { height: 100%; background: var(--success); width: 0%; transition: 0.5s; }
+        #progressFill { height: 100%; background: var(--success); width: 0%; transition: 0.5s; } 
 
-        /* المدخلات */
+        /* منطقة الإدخال */
         .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; background: #f8fafc; padding: 15px; border-radius: 15px; }
         .input-group { display: flex; flex-direction: column; }
-        label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #64748b; }
-        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 14px; }
+        label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #64748b; }
+        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
         
         .btn-row { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
+        .btn { border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-add { background: var(--primary); color: white; }
-        .btn-add:hover { background: #4338ca; }
-        .btn-clear { background: #94a3b8; color: white; }
+        .btn-clear { background: #94a3b8; color: white; } 
 
-        /* الفلترة */
-        .filter-section { margin-top: 25px; display: flex; gap: 8px; align-items: center; background: #e2e8f0; padding: 10px; border-radius: 10px; flex-wrap: wrap; }
-        .filter-section select { padding: 5px; border-radius: 5px; border: none; }
-
+        /* منطقة الفلترة */
+        .filter-section { margin-top: 30px; display: flex; gap: 10px; align-items: center; background: #e2e8f0; padding: 10px; border-radius: 10px; }
+        
         /* الجدول */
-        .table-area { overflow-x: auto; margin-top: 15px; border-radius: 10px; }
+        .table-area { overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
         th { background: #f1f5f9; padding: 12px; border-bottom: 2px solid #e2e8f0; }
         td { padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: center; }
-        .btn-del { color: var(--danger); border: 1px solid var(--danger); background: none; padding: 4px 8px; border-radius: 5px; cursor: pointer; }
+        .actions { display: flex; gap: 5px; justify-content: center; }
+        .btn-edit { color: var(--primary); background: none; border: 1px solid var(--primary); padding: 5px; border-radius: 5px; }
+        .btn-del { color: var(--danger); background: none; border: 1px solid var(--danger); padding: 5px; border-radius: 5px; }
         
         .summary-footer { margin-top: 20px; font-weight: bold; color: var(--primary); text-align: left; font-size: 18px; }
-        .status-msg { font-size: 12px; text-align: center; margin-top: 10px; color: #64748b; }
     </style>
 </head>
-<body>
+<body> 
 
 <div class="app-container">
     <div class="budget-card">
         <div style="display: flex; justify-content: space-between;">
-            <span>ميزانية شهر <span id="currentMonthName">--</span>: 11,284,000 ريال</span>
+            <span>الميزانية: 11,284,000 ريال</span>
             <span id="percentText">0%</span>
         </div>
         <div class="progress-bar"><div id="progressFill"></div></div>
@@ -59,9 +57,10 @@
             <span>المصروف: <span id="spentVal">0</span></span>
             <span>المتبقي: <span id="remainVal">0</span></span>
         </div>
-    </div>
+    </div> 
 
     <div class="input-grid">
+        <input type="hidden" id="editIndex" value="-1">
         <div class="input-group">
             <label>التاريخ</label>
             <input type="date" id="entryDate">
@@ -90,32 +89,30 @@
     </div>
     
     <div class="btn-row">
-        <button class="btn btn-add" onclick="handleSave()"><i class="fas fa-cloud-upload-alt"></i> حفظ في السحابة</button>
-        <button class="btn btn-clear" onclick="resetForm()">تفريغ</button>
-    </div>
-
-    <div id="status" class="status-msg">جاهز للاستخدام</div>
+        <button class="btn btn-add" id="saveBtn" onclick="handleSave()"><i class="fas fa-save"></i> حفظ السجل</button>
+        <button class="btn btn-clear" onclick="resetForm()">إلغاء</button>
+    </div> 
 
     <div class="filter-section">
         <i class="fas fa-filter"></i>
-        <select id="filterMonth" onchange="loadData()">
+        <select id="filterMonth" onchange="renderTable()">
             <option value="all">كل الأشهر</option>
             <option value="01">يناير</option><option value="02">فبراير</option><option value="03">مارس</option>
             <option value="04">أبريل</option><option value="05">مايو</option><option value="06">يونيو</option>
             <option value="07">يوليو</option><option value="08">أغسطس</option><option value="09">سبتمبر</option>
             <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
         </select>
-        <select id="filterCat" onchange="loadData()">
+        <select id="filterCat" onchange="renderTable()">
             <option value="all">كل الأقسام</option>
             <option value="المناوبين">المناوبين</option>
             <option value="النزلاء">النزلاء</option>
             <option value="الكادر الميداني">الكادر الميداني</option>
             <option value="الجرحى">الجرحى</option>
         </select>
-        <button onclick="exportExcel()" style="background: var(--success); color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;">
-            <i class="fas fa-file-excel"></i> تصدير
+        <button onclick="exportExcel()" style="padding: 10px; border-radius: 8px; background: var(--success); color: white; border: none; cursor: pointer;">
+            <i class="fas fa-file-excel"></i> تصدير الفلتر
         </button>
-    </div>
+    </div> 
 
     <div class="table-area">
         <table id="dataTable">
@@ -127,144 +124,167 @@
                     <th>غ</th>
                     <th>ع</th>
                     <th>التكلفة</th>
-                    <th>حذف</th>
+                    <th>إجراء</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
     <div class="summary-footer" id="filteredTotal">إجمالي الفلتر: 0 ريال</div>
-</div>
+</div> 
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBsqh9mL3vNREBOxnMxZFe7q3EXp4saBMI",
+    authDomain: "studio-1679220509-1ccd0.firebaseapp.com",
+    projectId: "studio-1679220509-1ccd0",
+    storageBucket: "studio-1679220509-1ccd0.firebasestorage.app",
+    messagingSenderId: "967662586382",
+    appId: "1:967662586382:web:1d88fe4ef3519614f74a5f"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  console.log("Firebase initialized successfully");
+</script>
 
 <script>
-    // --- إعدادات Supabase ---
-    const SB_URL = 'https://iukwhpzqrangfkofysqq.supabase.co';
-    const SB_KEY = 'Sb_publishable_DWmfIgH1PU14NWF6KthcaA_23eNuFWq';
-    const _client = supabase.createClient(SB_URL, SB_KEY);
-
-    const BUDGET_LIMIT = 11284000;
-    const PRICES = {
+    const BUDGET = 11284000;
+    const prices = {
         "المناوبين": [200, 739, 200],
         "النزلاء": [200, 739, 200],
         "الكادر الميداني": [200, 739, 200],
         "الجرحى": [1000, 2500, 800]
-    };
+    }; 
 
-    document.getElementById('entryDate').valueAsDate = new Date();
+    let history = JSON.parse(localStorage.getItem('meals_pro_2026')) || []; 
 
-    async function loadData() {
-        updateStatus("جاري المزامنة...");
-        const mFilter = document.getElementById('filterMonth').value;
-        const cFilter = document.getElementById('filterCat').value;
+    document.getElementById('entryDate').valueAsDate = new Date(); 
 
-        try {
-            // 1. حساب ميزانية "الشهر الحالي" فقط للتصفير التلقائي
-            const now = new Date();
-            const startDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            const endDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-            
-            document.getElementById('currentMonthName').innerText = now.toLocaleString('ar-EG', {month: 'long'});
-
-            const { data: bData } = await _client.from('meals')
-                .select('cost')
-                .gte('entry_date', startDay)
-                .lte('entry_date', endDay);
-
-            const spentNow = bData ? bData.reduce((s, r) => s + parseFloat(r.cost), 0) : 0;
-            updateBudgetUI(spentNow);
-
-            // 2. جلب سجلات الجدول
-            let query = _client.from('meals').select('*');
-            if(mFilter !== 'all') query = query.gte('entry_date', `2026-${mFilter}-01`).lte('entry_date', `2026-${mFilter}-31`);
-            if(cFilter !== 'all') query = query.eq('category', cFilter);
-
-            const { data, error } = await query.order('entry_date', { ascending: false });
-            if(error) throw error;
-
-            renderTable(data || []);
-            updateStatus("تم التحديث بنجاح");
-        } catch (e) {
-            updateStatus("خطأ في الاتصال بالسحابة");
-            console.error(e);
-        }
-    }
-
-    function updateBudgetUI(spent) {
-        const remain = BUDGET_LIMIT - spent;
-        const p = ((spent / BUDGET_LIMIT) * 100).toFixed(1);
-        document.getElementById('spentVal').innerText = spent.toLocaleString();
-        document.getElementById('remainVal').innerText = remain.toLocaleString();
-        document.getElementById('percentText').innerText = p + "%";
-        document.getElementById('progressFill').style.width = Math.min(p, 100) + "%";
-        document.getElementById('progressFill').style.background = p > 90 ? '#ef4444' : '#22c55e';
-    }
-
-    async function handleSave() {
+    function handleSave() {
+        const index = parseInt(document.getElementById('editIndex').value);
         const date = document.getElementById('entryDate').value;
         const cat = document.getElementById('category').value;
         const b = parseInt(document.getElementById('breakfast').value) || 0;
         const l = parseInt(document.getElementById('lunch').value) || 0;
         const d = parseInt(document.getElementById('dinner').value) || 0;
+        
+        if(!date) return alert("الرجاء تحديد التاريخ"); 
 
-        if(!date) return alert("الرجاء اختيار التاريخ");
+        const cost = (b * prices[cat][0]) + (l * prices[cat][1]) + (d * prices[cat][2]);
+        const entry = { date, cat, b, l, d, cost }; 
 
-        const cost = (b * PRICES[cat][0]) + (l * PRICES[cat][1]) + (d * PRICES[cat][2]);
+        if(index === -1) {
+            history.push(entry);
+        } else {
+            history[index] = entry;
+        } 
 
-        updateStatus("جاري الحفظ...");
-        const { error } = await _client.from('meals').insert([{
-            entry_date: date, category: cat, breakfast: b, lunch: l, dinner: d, cost: cost
-        }]);
+        saveAndRefresh();
+        resetForm();
+    } 
 
-        if(error) alert("فشل الحفظ: تأكد من إعدادات RLS في Supabase");
-        else {
-            resetForm();
-            await loadData();
-        }
-    }
+    function saveAndRefresh() {
+        localStorage.setItem('meals_pro_2026', JSON.stringify(history));
+        updateBudgetCard();
+        renderTable();
+    } 
 
-    async function deleteItem(id) {
-        if(!confirm("هل أنت متأكد من الحذف؟")) return;
-        updateStatus("جاري الحذف...");
-        await _client.from('meals').delete().eq('id', id);
-        await loadData();
-    }
+    function updateBudgetCard() {
+        const totalSpent = history.reduce((s, i) => s + i.cost, 0);
+        const remain = BUDGET - totalSpent;
+        const p = (totalSpent / BUDGET * 100).toFixed(1); 
 
-    function renderTable(data) {
+        document.getElementById('spentVal').innerText = totalSpent.toLocaleString();
+        document.getElementById('remainVal').innerText = remain.toLocaleString();
+        document.getElementById('percentText').innerText = p + "%";
+        document.getElementById('progressFill').style.width = Math.min(p, 100) + "%";
+        document.getElementById('progressFill').style.background = p > 90 ? 'var(--danger)' : 'var(--success)';
+    } 
+
+    function renderTable() {
+        const month = document.getElementById('filterMonth').value;
+        const cat = document.getElementById('filterCat').value;
         const tbody = document.querySelector("#dataTable tbody");
         tbody.innerHTML = "";
-        let total = 0;
-        data.forEach(i => {
-            total += parseFloat(i.cost);
-            tbody.innerHTML += `<tr>
-                <td>${i.entry_date}</td>
-                <td>${i.category}</td>
-                <td>${i.breakfast}</td>
-                <td>${i.lunch}</td>
-                <td>${i.dinner}</td>
-                <td>${parseFloat(i.cost).toLocaleString()}</td>
-                <td><button class="btn-del" onclick="deleteItem(${i.id})"><i class="fas fa-trash"></i></button></td>
-            </tr>`;
+        
+        let filteredSum = 0; 
+
+        history.forEach((item, index) => {
+            const itemMonth = item.date.split('-')[1];
+            if ((month === 'all' || itemMonth === month) && (cat === 'all' || item.cat === cat)) {
+                filteredSum += item.cost;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td>${item.cat}</td>
+                        <td>${item.b}</td>
+                        <td>${item.l}</td>
+                        <td>${item.d}</td>
+                        <td>${item.cost.toLocaleString()}</td>
+                        <td class="actions">
+                            <button class="btn-edit" onclick="editItem(${index})"><i class="fas fa-edit"></i></button>
+                            <button class="btn-del" onclick="deleteItem(${index})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            }
         });
-        document.getElementById('filteredTotal').innerText = `إجمالي الفلتر: ${total.toLocaleString()} ريال`;
-    }
+        document.getElementById('filteredTotal').innerText = `إجمالي الفلتر: ${filteredSum.toLocaleString()} ريال`;
+    } 
+
+    function editItem(index) {
+        const item = history[index];
+        document.getElementById('entryDate').value = item.date;
+        document.getElementById('category').value = item.cat;
+        document.getElementById('breakfast').value = item.b;
+        document.getElementById('lunch').value = item.l;
+        document.getElementById('dinner').value = item.d;
+        document.getElementById('editIndex').value = index;
+        document.getElementById('saveBtn').innerHTML = '<i class="fas fa-sync"></i> تحديث السجل';
+        document.getElementById('saveBtn').style.background = "#f59e0b";
+    } 
+
+    function deleteItem(index) {
+        if(confirm("هل تريد حذف هذا السجل نهائياً؟")) {
+            history.splice(index, 1);
+            saveAndRefresh();
+        }
+    } 
 
     function resetForm() {
+        document.getElementById('editIndex').value = "-1";
         document.getElementById('breakfast').value = "";
         document.getElementById('lunch').value = "";
         document.getElementById('dinner').value = "";
-    }
-
-    function updateStatus(msg) {
-        document.getElementById('status').innerText = msg;
-    }
+        document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> حفظ السجل';
+        document.getElementById('saveBtn').style.background = "var(--primary)";
+    } 
 
     function exportExcel() {
-        const table = document.getElementById("dataTable");
-        const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, "تقرير_الوجبات_2026.xlsx");
-    }
+        const month = document.getElementById('filterMonth').value;
+        const cat = document.getElementById('filterCat').value;
+        
+        const filtered = history.filter(item => {
+            const itemMonth = item.date.split('-')[1];
+            return (month === 'all' || itemMonth === month) && (cat === 'all' || item.cat === cat);
+        }); 
 
-    window.onload = loadData;
-</script>
+        if(filtered.length === 0) return alert("لا توجد بيانات للفلتر الحالي!"); 
+
+        const ws = XLSX.utils.json_to_sheet(filtered);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "تقرير مفلتر");
+        XLSX.writeFile(wb, `تقرير_وجبات_${month}_${cat}.xlsx`);
+    } 
+
+    window.onload = () => {
+        updateBudgetCard();
+        renderTable();
+    };
+</script> 
+
 </body>
 </html>
